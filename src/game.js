@@ -1,5 +1,5 @@
 /* ==========================================================================
-   OSDUELIST STICKMAN - MULTI-TOUCH VE ANA OYUN MOTORU (TAM SÜRÜM)
+   OSDUELIST STICKMAN - MULTI-TOUCH VE HARİTA MOTORU (TAM SÜRÜM)
    ========================================================================== */
 
 const canvas = document.getElementById("gameCanvas");
@@ -9,23 +9,27 @@ const ctx = canvas.getContext("2d");
 canvas.width = Physics.worldWidth;
 canvas.height = Physics.worldHeight;
 
-// Güncellenmiş Renk Havuzu
+// Renk Havuzu
 const colors = ["#3498db", "#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6", "#ffffff"];
 const colorNames = ["Mavi", "Kırmızı", "Yeşil", "Sarı", "Mor", "Beyaz"];
 
-// Güncellenmiş Yeni Şapka Havuzu (İsimleri İstediğin Gibi Düzenlendi)
+// Şapka Havuzu
 const hats = ["Yok", "Kral Tacı", "Kovboy Şapkası", "Robot Kaskı", "Steve Kafası", "Muz"];
 
-// Güncellenmiş Yeni Çılgın Silah Listesi (Hasar ve Menzil Dengeleri Yapıldı)
+// Silah Listesi (Bomba Hasarı 35 yapıldı -> 3 İsabet = 105 Hasar ile Ölüm)
 const weaponsList = [
     { name: "Kılıç", type: "melee", damage: 16, range: 65 },
     { name: "Lazer", type: "ranged", damage: 10, range: 350 },
     { name: "Balta", type: "melee", damage: 22, range: 60 },
     { name: "Balyoz", type: "melee", damage: 25, range: 65 },
-    { name: "Bomba", type: "projectile", damage: 20, range: 400 },
+    { name: "Bomba", type: "projectile", damage: 35, range: 400 },
     { name: "Muz Fırlatan Silah", type: "projectile", damage: 12, range: 450 },
     { name: "Mıknatıs", type: "pull", damage: 5, range: 180 }
 ];
+
+// Harita Listesi
+const mapsList = ["Yüksek Arena", "Kapalı Arena"];
+let mapIdx = 0;
 
 // Oyuncu Seçim İndeksleri
 let p1Config = { colorIdx: 0, hatIdx: 0, weaponIdx: 0 };
@@ -61,6 +65,13 @@ function changeWeapon(player, dir) {
     document.getElementById(`p${player}-weapon-text`).innerText = weaponsList[cfg.weaponIdx].name;
 }
 
+// Yeni Harita Değiştirme Fonksiyonu
+function changeMap(dir) {
+    mapIdx = (mapIdx + dir + mapsList.length) % mapsList.length;
+    document.getElementById("map-name-text").innerText = mapsList[mapIdx];
+    Physics.currentMap = mapsList[mapIdx]; // Fizik motoruna haritayı bildir
+}
+
 /* ==========================================================================
    MASAÜSTÜ KLAVYE DİNLEYİCİLERİ
    ========================================================================== */
@@ -71,12 +82,11 @@ window.addEventListener("keyup", e => keys[e.code] = false);
 /* ==========================================================================
    GELİŞMİŞ MULTI-TOUCH (ÇOKLU DOKUNMATİK) SİSTEMİ
    ========================================================================== */
-const mobileKeys = {}; // Mobilde aktif basılan tüm sanal tuşları tutar
+const mobileKeys = {};
 
 function handleTouchUpdate(e) {
     e.preventDefault();
     
-    // Her güncellemede önce tüm mobil giriş durumlarını sıfırla
     const buttons = document.querySelectorAll("#mobile-controls .btn");
     buttons.forEach(btn => {
         let code = btn.getAttribute("data-btn");
@@ -84,23 +94,19 @@ function handleTouchUpdate(e) {
         btn.classList.remove("active-press");
     });
 
-    // Ekrandaki tüm aktif parmak dokunuşlarını (Multi-touch) tara
     for (let i = 0; i < e.targetTouches.length; i++) {
         let touch = e.targetTouches[i];
-        
-        // Parmağın koordinatındaki HTML elementini bul
         let element = document.elementFromPoint(touch.clientX, touch.clientY);
         
         if (element && element.closest(".btn")) {
             let actualBtn = element.closest(".btn");
             let code = actualBtn.getAttribute("data-btn");
             mobileKeys[code] = true;
-            actualBtn.classList.add("active-press"); // Görsel basılma efekti ver
+            actualBtn.classList.add("active-press");
         }
     }
 }
 
-// Multi-touch dinleyicilerini tüm kontrol paneline bağlıyoruz
 const controlZone = document.getElementById("mobile-controls");
 controlZone.addEventListener("touchstart", handleTouchUpdate, { passive: false });
 controlZone.addEventListener("touchmove", handleTouchUpdate, { passive: false });
@@ -113,7 +119,7 @@ controlZone.addEventListener("touchcancel", handleTouchUpdate, { passive: false 
 function startGame(mode) {
     gameMode = mode;
     gameActive = true;
-    projectiles = []; // Eski mermileri temizle
+    projectiles = []; 
 
     // Oyuncu 1 Kurulumu
     player1.color = colors[p1Config.colorIdx];
@@ -132,7 +138,6 @@ function startGame(mode) {
     document.getElementById("p1-name-display").innerText = "Oyuncu 1";
     document.getElementById("p2-name-display").innerText = gameMode === 1 ? "Bot (AI)" : "Oyuncu 2";
 
-    // Ekran Gizleme / Gösterme Aşamaları
     document.getElementById("main-menu").classList.add("hidden");
     document.getElementById("ui-container").classList.remove("hidden");
     document.getElementById("mobile-controls").classList.remove("hidden");
@@ -160,17 +165,14 @@ function handleBotAI() {
     let distX = (player1.x + player1.width/2) - (player2.x + player2.width/2);
     let distY = player1.y - player2.y;
 
-    // Yatay Takip
     if (Math.abs(distX) > 40) {
         if (distX > 0) player2.moveRight(); else player2.moveLeft();
     }
 
-    // Akıllı Zıplama Tetikçisi
     if (distY < -60 && Math.random() < 0.05) {
         player2.jump();
     }
 
-    // Silah Kullanım Kuralları
     if (Math.abs(distX) < player2.weapon.range && Math.abs(distY) < 80) {
         player2.direction = distX > 0 ? 1 : -1;
         player2.weapon.use(player2, player1);
@@ -190,11 +192,19 @@ function gameLoop() {
     for (let platform of Physics.platforms) {
         ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
         ctx.fillStyle = "#34495e";
-        ctx.fillRect(platform.x, platform.y, platform.width, 3); // Parlama şeridi
+        ctx.fillRect(platform.x, platform.y, platform.width, 3); 
         ctx.fillStyle = "#2c3e50";
     }
 
-    // 2. Oyuncu 1 Kontrollerini Oku
+    // "Kapalı Arena" haritasındaysak alt zemine görsel bir barikat çizelim
+    if (Physics.currentMap === "Kapalı Arena") {
+        ctx.fillStyle = "#111a24";
+        ctx.fillRect(0, 530, 900, 20);
+        ctx.fillStyle = "#e74c3c"; // Güvenli bölge alt kırmızı sınırı
+        ctx.fillRect(0, 530, 900, 3);
+    }
+
+    // 2. Oyuncu 1 Kontrolleri
     if (player1.health > 0) {
         if (keys["KeyA"] || mobileKeys["KeyA"]) player1.moveLeft();
         if (keys["KeyD"] || mobileKeys["KeyD"]) player1.moveRight();
@@ -202,7 +212,7 @@ function gameLoop() {
         if (keys["Space"] || mobileKeys["Space"]) player1.weapon.use(player1, player2);
     }
 
-    // 3. Oyuncu 2 Veya Bot Kontrollerini Oku
+    // 3. Oyuncu 2 Veya Bot Kontrolleri
     if (gameMode === 2 && player2.health > 0) {
         if (keys["ArrowLeft"] || mobileKeys["ArrowLeft"]) player2.moveLeft();
         if (keys["ArrowRight"] || mobileKeys["ArrowRight"]) player2.moveRight();
@@ -218,23 +228,17 @@ function gameLoop() {
     if (player1.weapon) player1.weapon.update();
     if (player2.weapon) player2.weapon.update();
 
-    // 5. Aktif Mermilerin (Bomba, Muz) Fiziğini İşleme ve Çizme
+    // 5. Aktif Mermilerin (Bomba ve Muz) Fiziğini İşleme ve Çizme
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let proj = projectiles[i];
         
-        // Merminin kime hasar vereceğini sahibine göre belirle
-        let currentTarget = (player1.weapon && player1.weapon.name === "Bomba" || player1.weapon && player1.weapon.name === "Muz Fırlatan Silah") && proj.vx * (player1.direction) > 0 ? player2 : player1;
-        
-        // Eğer iki mermi de sahnedeyse daha güvenli hedef doğrulaması yapalım
-        if (player1.health > 0 && player2.health > 0) {
-            // Mermi, fırlatanın tersine doğru kime yakınsa ona çarpar mantığıyla güncellenir
-            proj.update(proj.vx > 0 ? player2 : player1);
-        } else {
-            proj.update(player2);
-        }
+        // Bombaların her iki oyuncuyu da etkileyebilmesi için nesneleri parametre olarak geçiyoruz
+        proj.update(player1, player2);
 
         if (!proj.active) {
-            projectiles.splice(i, 1); // Pasif olan mermiyi diziden at
+            // Patlama anı çizim efektini tetiklemek için önce çizdirip sonra siliyoruz
+            proj.draw(ctx); 
+            projectiles.splice(i, 1); 
         } else {
             proj.draw(ctx);
         }
@@ -247,9 +251,11 @@ function gameLoop() {
     // 7. Arayüz Can Güncellemesi
     updateUI();
 
-    // 8. Ölüm ve Boşluğa Düşme Limitleri
-    if (player1.y > 530) player1.health = 0;
-    if (player2.y > 530) player2.health = 0;
+    // 8. Ölüm ve Boşluğa Düşme Limitleri (Sadece Yüksek Arena'da boşluktan düşme aktiftir)
+    if (Physics.currentMap === "Yüksek Arena") {
+        if (player1.y > 530) player1.health = 0;
+        if (player2.y > 530) player2.health = 0;
+    }
 
     if (player1.health <= 0 || player2.health <= 0) {
         ctx.fillStyle = "#ffffff";
