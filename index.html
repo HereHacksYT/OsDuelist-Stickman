@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>OsDuelist Stickman</title>
+    <title>OsDuelist Stickman - Web Clone</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,6 +14,53 @@
 
     <div id="main-menu">
         <h1>OsDuelist Stickman</h1>
+        
+        <div class="customization-container">
+            <div class="char-select" id="p1-select">
+                <h3>OYUNCU 1</h3>
+                <div class="select-row">
+                    <span>Renk:</span>
+                    <button onclick="changeColor(1, -1)">◀</button>
+                    <span id="p1-color-text" style="color:#3498db">Mavi</span>
+                    <button onclick="changeColor(1, 1)">▶</button>
+                </div>
+                <div class="select-row">
+                    <span>Şapka:</span>
+                    <button onclick="changeHat(1, -1)">◀</button>
+                    <span id="p1-hat-text">Yok</span>
+                    <button onclick="changeHat(1, 1)">▶</button>
+                </div>
+                <div class="select-row">
+                    <span>Silah:</span>
+                    <button onclick="changeWeapon(1, -1)">◀</button>
+                    <span id="p1-weapon-text">Kılıç</span>
+                    <button onclick="changeWeapon(1, 1)">▶</button>
+                </div>
+            </div>
+
+            <div class="char-select" id="p2-select">
+                <h3>OYUNCU 2 / BOT</h3>
+                <div class="select-row">
+                    <span>Renk:</span>
+                    <button onclick="changeColor(2, -1)">◀</button>
+                    <span id="p2-color-text" style="color:#e74c3c">Kırmızı</span>
+                    <button onclick="changeColor(2, 1)">▶</button>
+                </div>
+                <div class="select-row">
+                    <span>Şapka:</span>
+                    <button onclick="changeHat(2, -1)">◀</button>
+                    <span id="p2-hat-text">Yok</span>
+                    <button onclick="changeHat(2, 1)">▶</button>
+                </div>
+                <div class="select-row">
+                    <span>Silah:</span>
+                    <button onclick="changeWeapon(2, -1)">◀</button>
+                    <span id="p2-weapon-text">Lazer</span>
+                    <button onclick="changeWeapon(2, 1)">▶</button>
+                </div>
+            </div>
+        </div>
+
         <div class="menu-buttons">
             <button onclick="startGame(1)">1 OYUNCU (VS BOT)</button>
             <button onclick="startGame(2)">2 OYUNCU (AYNI TELEFON)</button>
@@ -22,11 +69,11 @@
 
     <div id="ui-container" class="hidden">
         <div class="player-hud" id="p1-hud">
-            <div class="username">Oyuncu 1</div>
+            <div class="username" id="p1-name-display">Oyuncu 1</div>
             <div class="health-bar-container"><div class="health-bar" id="p1-health"></div></div>
         </div>
         <div class="player-hud" id="p2-hud">
-            <div class="username">Oyuncu 2</div>
+            <div class="username" id="p2-name-display">Bot</div>
             <div class="health-bar-container"><div class="health-bar" id="p2-health"></div></div>
         </div>
     </div>
