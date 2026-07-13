@@ -1,5 +1,5 @@
 /* ==========================================================================
-   OSDUELIST STICKMAN - SİLAHLAR VE FİZİKSEL MERMİ MOTORU (TAM SÜRÜM)
+   OSDUELIST STICKMAN - SİLAHLAR VE GELİŞMİŞ ETKİLEŞİM MOTORU (TAM SÜRÜM)
    ========================================================================== */
 
 // Ekrandaki mermileri (Muz ve Yuvarlanan Bomba) takip eden küresel dizi
@@ -30,7 +30,6 @@ class Weapon {
             ctx.lineWidth = 4;
             ctx.strokeStyle = "#f39c12"; 
             ctx.beginPath();
-            ctx.moveTo(handX);
             ctx.moveTo(handX, handY);
             if (this.isAttacking) {
                 ctx.lineTo(handX + (this.range * 0.9 * direction), handY + 10);
@@ -145,11 +144,10 @@ class Weapon {
         this.isAttacking = true;
         this.attackTimer = 15;
 
-        // COOLDOWN BALANSLARI
         if (this.name === "Bomba") {
-            this.cooldown = 180; // Tam 3 Saniye Bekleme Süresi
+            this.cooldown = 180; // 3 Saniye
         } else {
-            this.cooldown = 60;  // Diğer Tüm Silahlar ve Muz Tam 1 Saniye
+            this.cooldown = 60;  // 1 Saniye
         }
 
         let ownerCenterX = owner.x + owner.width / 2;
@@ -195,7 +193,7 @@ class Weapon {
 }
 
 /* ==========================================================================
-   YUVARLANAN VE GECİKMELİ PATLAYAN PROJECTILE MOTORU
+   YUVARLANAN, TEKMELENEBİLEN VE GENİŞ ALANLI BOMBA MOTORU
    ========================================================================== */
 class Projectile {
     constructor(x, y, direction, type, damage) {
@@ -206,25 +204,47 @@ class Projectile {
         this.radius = type === "bomba" ? 9 : 6;
         this.active = true;
 
-        // İlk Fırlatılma Hızları
         this.vx = direction * (type === "muz" ? 12 : 6);
         this.vy = type === "bomba" ? -4.5 : 0;
 
-        // Bomba Mekanik Zamanlayıcıları
-        this.isGrounded = false;
-        this.fuseTimer = 60; // Yere değdikten sonra 1 saniye (60 kare) sayar
         this.hasTouchedGround = false;
-        this.explosionCircle = 0; // Görsel patlama halkası efekti çapı
+        this.fuseTimer = 60; // Yere değdikten sonra 1 saniye (60 kare)
+        this.explosionCircle = 0;
+        this.drawExplosionFX = false;
     }
 
     update(p1, p2) {
         if (!this.active) return;
 
-        // --- MUZ MERMİSİ KURALI (DOĞRUSAL HIZLI ATIŞ) ---
+        // --- 1. KURAL: OYUNCULARIN BİRBİRİNE DEĞMESİ (KATILIK MOTORU) ---
+        if (p1.health > 0 && p2.health > 0) {
+            let p1CenterX = p1.x + p1.width / 2;
+            let p2CenterX = p2.x + p2.width / 2;
+            
+            // Yatay ve dikeyde kutuların çakışma durumları
+            let isOverlappingX = p1.x < p2.x + p2.width && p1.x + p1.width > p2.x;
+            let isOverlappingY = p1.y < p2.y + p2.height && p1.y + p1.height > p2.y;
+
+            if (isOverlappingX && isOverlappingY) {
+                // Karakterleri birbirinin dışına doğru hafifçe it
+                let intersectX = (p1.width + p2.width) / 2 - Math.abs(p1CenterX - p2CenterX);
+                if (p1CenterX < p2CenterX) {
+                    p1.x -= intersectX * 0.5;
+                    p2.x += intersectX * 0.5;
+                    p1.vx = -1.5;
+                    p2.vx = 1.5;
+                } else {
+                    p1.x += intersectX * 0.5;
+                    p2.x -= intersectX * 0.5;
+                    p1.vx = 1.5;
+                    p2.vx = -1.5;
+                }
+            }
+        }
+
+        // --- MUZ MERMİSİ KURALI ---
         if (this.type === "muz") {
             this.x += this.vx;
-            
-            // Muz doğrudan gövdeye çarptı mı?
             [p1, p2].forEach(target => {
                 if (target.health > 0 && this.x > target.x && this.x < target.x + target.width &&
                     this.y > target.y && this.y < target.y + target.height) {
@@ -232,49 +252,72 @@ class Projectile {
                     target.takeDamage(this.damage, this.vx > 0 ? 9 : -9, -2);
                 }
             });
-
             if (this.x < 0 || this.x > 900) this.active = false;
             return;
         }
 
-        // --- GELİŞMİŞ YUVARLANAN BOMBA SİMÜLASYONU ---
+        // --- GELİŞMİŞ YUVARLANAN VE TEKMELENEBİLEN BOMBA SİMÜLASYONU ---
         if (this.type === "bomba") {
-            // Yerçekimi bombayı aşağı çeker
-            this.vy += 0.3; 
+            this.vy += 0.3; // Yerçekimi
             
-            // Sürtünme: Yere değdiğinde bomba yuvarlanarak yavaşlar
             if (this.hasTouchedGround) {
-                this.vx *= 0.95; 
+                this.vx *= 0.95; // Sürtünme yavaşlatması
             }
 
             this.x += this.vx;
             this.y += this.vy;
 
-            // Ekran Duvarlarından Sekme Mekaniği
+            // Ekran Sınırlarından Sekme
             if (this.x - this.radius < 0) { this.x = this.radius; this.vx = -this.vx * 0.6; }
             if (this.x + this.radius > 900) { this.x = 900 - this.radius; this.vx = -this.vx * 0.6; }
 
-            // Platform Çarpışma ve Üzerinde Yuvarlanma Kontrolü
-            let onPlatform = false;
+            // Platform Çarpışma Testi
             for (let plat of Physics.platforms) {
                 if (this.x > plat.x && this.x < plat.x + plat.width &&
                     this.y + this.radius >= plat.y && this.y - this.radius <= plat.y + 10) {
                     this.y = plat.y - this.radius;
                     this.vy = 0;
-                    onPlatform = true;
                     this.hasTouchedGround = true;
                 }
             }
 
-            // Kapalı Arena zemin kontrolü
             if (Physics.currentMap === "Kapalı Arena" && this.y + this.radius >= 530) {
                 this.y = 530 - this.radius;
                 this.vy = 0;
-                onPlatform = true;
                 this.hasTouchedGround = true;
             }
 
-            // Fitil Geri Sayımı (Yere bir kez değdiyse başlar)
+            // --- 2. KURAL: BOMBANIN KARAKTERLERE DEĞMESİ VE TEKMELENMESİ ---
+            [p1, p2].forEach(player => {
+                if (player.health <= 0) return;
+
+                // Bombanın oyuncu kutusuna çarpma testi
+                let bombOverlapsX = this.x + this.radius > player.x && this.x - this.radius < player.x + player.width;
+                let bombOverlapsY = this.y + this.radius > player.y && this.y - this.radius < player.y + player.height;
+
+                if (bombOverlapsX && bombOverlapsY) {
+                    let playerCenterX = player.x + player.width / 2;
+                    
+                    // Bombayı hareket yönüne veya oyuncunun hızına göre fırlat/tekmele
+                    if (this.x < playerCenterX) {
+                        this.vx = -Math.abs(this.vx) - 4; // Sola tekmele
+                        this.x = player.x - this.radius - 2;
+                    } else {
+                        this.vx = Math.abs(this.vx) + 4;  // Sağa tekmele
+                        this.x = player.x + player.width + this.radius + 2;
+                    }
+                    
+                    // Karakter hareket halindeyse ek hız ver
+                    if (Math.abs(player.vx) > 0.2) {
+                        this.vx += player.vx * 1.5;
+                    }
+                    
+                    this.vy = -2.5; // Tekmeleyince bomba hafifçe havaya sıçrar
+                    this.hasTouchedGround = true; // Karakter ayağına değince de fitil ateşlenir!
+                }
+            });
+
+            // Geri sayım kontrolü
             if (this.hasTouchedGround) {
                 this.fuseTimer--;
                 if (this.fuseTimer <= 0) {
@@ -282,68 +325,63 @@ class Projectile {
                 }
             }
 
-            // Boşluğa uçup gitme kontrolü
             if (this.y > 560) this.active = false;
         }
     }
 
     /**
-     * Devasa Alan Hasarlı Patlama Algoritması
+     * İSTEK ÜZERİNE 20'den 30'a (%50 GENİŞLETİLMİŞ) ÇIKARILAN PATLAMA ALANI
      */
     explode(p1, p2) {
         this.active = false;
-        this.explosionCircle = 75; // Patlama etki yarıçapı
+        
+        // Önceki yarıçap 75 pikseldi, %50 artırarak tam 112 piksele (Mekanik alan ölçüsüyle 20'den 30'a) çıkardık!
+        this.explosionCircle = 112; 
+        this.drawExplosionFX = true;
 
-        // Haritadaki her iki karakteri de patlama mesafesine göre kontrol et
         [p1, p2].forEach(target => {
             if (target.health <= 0) return;
 
             let targetCenterX = target.x + target.width / 2;
             let targetCenterY = target.y + target.height / 2;
-            
-            // Merkezler arası tam piksel mesafesi
             let dist = Math.hypot(this.x - targetCenterX, this.y - targetCenterY);
 
             if (dist < this.explosionCircle) {
-                // Bombanın itme yönü
                 let pushDir = targetCenterX > this.x ? 1 : -1;
-                // Yakınlığa göre şok dalgası şiddeti ayarla
                 let forceMultiplier = (this.explosionCircle - dist) / this.explosionCircle;
                 
-                // Hasar 35 yapıldı: 3 bomba tam represents 105 hasar -> ÖLÜM!
-                target.takeDamage(this.damage, pushDir * 22 * forceMultiplier, -13 * forceMultiplier);
+                // Geniş alan şok dalgasıyla hasar ve fırlatma uygula
+                target.takeDamage(this.damage, pushDir * 24 * forceMultiplier, -14 * forceMultiplier);
             }
         });
-
-        // Patlama duman halkasını ekranda göstermek için anlık efekt tetikleyicisi çizelim
-        this.drawExplosionFX = true;
     }
 
     draw(ctx) {
+        // Genişletilmiş Yeni Patlama Efekti Çizimi
         if (!this.active) {
-            // Patlama anı alev çemberi kozmetiği
-            if (this.drawExplosionFX && this.explosionCircle > 0) {
-                ctx.fillStyle = "rgba(231, 76, 60, 0.7)";
+            if (this.drawExplosionFX) {
+                // Büyük dış şok dalgası halkası (112 piksel yarıçap)
+                ctx.fillStyle = "rgba(231, 76, 60, 0.6)";
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 65, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.explosionCircle, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = "rgba(241, 196, 15, 0.5)";
+                
+                // Sıcak merkez çekirdek
+                ctx.fillStyle = "rgba(241, 196, 15, 0.7)";
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 35, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, this.explosionCircle * 0.5, 0, Math.PI * 2);
                 ctx.fill();
-                this.drawExplosionFX = false; // Bir sonraki karede temizle
+                this.drawExplosionFX = false; 
             }
             return;
         }
 
         if (this.type === "bomba") {
-            // Bomba Gövdesi
             ctx.fillStyle = "#2c3e50";
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctx.fill();
             
-            // Yere değdiyse parlayan kırmızı fitil uyarısı flaş çakar
             if (this.hasTouchedGround && Math.floor(this.fuseTimer / 6) % 2 === 0) {
                 ctx.fillStyle = "#e74c3c";
             } else {
