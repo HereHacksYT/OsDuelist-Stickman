@@ -64,6 +64,13 @@
             </div>
         </div>
 
+        <div class="map-select-zone" style="margin-bottom: 25px; display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.5); padding: 10px 25px; border-radius: 10px;">
+            <span style="color:#bdc3c7; font-family:sans-serif; font-weight:bold;">HARİTA:</span>
+            <button onclick="changeMap(-1)" style="background:#34495e; color:white; border:none; width:30px; height:30px; border-radius:4px; font-weight:bold; cursor:pointer;">◀</button>
+            <span id="map-name-text" style="width:140px; text-align:center; color:#f1c40f; font-size:18px; text-transform:uppercase;">Yüksek Arena</span>
+            <button onclick="changeMap(1)" style="background:#34495e; color:white; border:none; width:30px; height:30px; border-radius:4px; font-weight:bold; cursor:pointer;">▶</button>
+        </div>
+
         <div class="menu-buttons">
             <button class="menu-btn" onclick="startGame(1)">1 OYUNCU (VS BOT)</button>
             <button class="menu-btn" onclick="startGame(2)">2 OYUNCU (AYNI EKRAN)</button>
