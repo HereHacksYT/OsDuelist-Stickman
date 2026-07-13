@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supreme Duelist Stickman - Web Clone</title>
+    <title>OsDuelist Stickman</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="ui-container">
         <div class="player-hud" id="p1-hud">
-            <div class="username">Oyuncu 1</div>
+            <div class="username">Oyuncu 1 (Mavi)</div>
             <div class="health-bar-container">
                 <div class="health-bar" id="p1-health"></div>
             </div>
         </div>
         
         <div class="player-hud" id="p2-hud">
-            <div class="username">Oyuncu 2</div>
+            <div class="username">Bot (Kırmızı)</div>
             <div class="health-bar-container">
                 <div class="health-bar" id="p2-health"></div>
             </div>
@@ -25,9 +26,10 @@
 
     <canvas id="gameCanvas"></canvas>
 
-    <script src="physics.js"></script>
-    <script src="player.js"></script>
-    <script src="weapon.js"></script>
-    <script src="game.js"></script>
+    <script src="src/physics.js"></script>
+    <script src="src/player.js"></script>
+    <script src="src/weapon.js"></script>
+    <script src="src/game.js"></script>
+
 </body>
 </html>
