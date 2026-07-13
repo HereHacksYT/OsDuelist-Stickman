@@ -8,7 +8,6 @@
 </head>
 <body>
 
-    <!-- TELEFONU YAN ÇEVİRME UYARISI -->
     <div id="rotate-warning">
         <div class="warning-text">
             <h2>Lütfen Telefonu Yan Çevirin! 🔄</h2>
@@ -16,12 +15,10 @@
         </div>
     </div>
 
-    <!-- ANA GİRİŞ VE ÖZELLEŞTİRME MENÜSÜ -->
     <div id="main-menu">
         <h1>OSDUELIST STICKMAN</h1>
         
         <div class="customization-container">
-            <!-- OYUNCU 1 SEÇİM ALANI -->
             <div class="char-select" id="p1-select">
                 <h3>OYUNCU 1 (MAVİ)</h3>
                 <div class="select-row">
@@ -44,7 +41,6 @@
                 </div>
             </div>
 
-            <!-- OYUNCU 2 SEÇİM ALANI -->
             <div class="char-select" id="p2-select">
                 <h3>OYUNCU 2 / BOT (KIRMIZI)</h3>
                 <div class="select-row">
@@ -68,14 +64,12 @@
             </div>
         </div>
 
-        <!-- MOD SEÇİM BUTONLARI -->
         <div class="menu-buttons">
             <button class="menu-btn" onclick="startGame(1)">1 OYUNCU (VS BOT)</button>
             <button class="menu-btn" onclick="startGame(2)">2 OYUNCU (AYNI EKRAN)</button>
         </div>
     </div>
 
-    <!-- OYUN İÇİ CAN VE HUD PANELİ -->
     <div id="ui-container" class="hidden">
         <div class="player-hud" id="p1-hud">
             <div class="username" id="p1-name-display">Oyuncu 1</div>
@@ -92,29 +86,24 @@
         </div>
     </div>
 
-    <!-- TELEFON MOBİL DOKUNMATİK KONTROLLERİ -->
     <div id="mobile-controls" class="hidden">
-        <!-- Oyuncu 1 Butonları (Ekranın Solunda) -->
         <div class="joystick-zone" id="p1-ctrl">
-            <button class="btn ctrl-btn" id="btn-p1-left">◀</button>
-            <button class="btn ctrl-btn" id="btn-p1-up">▲</button>
-            <button class="btn ctrl-btn" id="btn-p1-right">▶</button>
-            <button class="btn attack-btn" id="btn-p1-atk">⚔</button>
+            <button class="btn ctrl-btn" data-btn="KeyA">◀</button>
+            <button class="btn ctrl-btn" data-btn="KeyW">▲</button>
+            <button class="btn ctrl-btn" data-btn="KeyD">▶</button>
+            <button class="btn attack-btn" data-btn="Space">⚔</button>
         </div>
 
-        <!-- Oyuncu 2 Butonları (Ekranın Sağında - 2 Kişilik Mod İçin) -->
         <div class="joystick-zone" id="p2-ctrl">
-            <button class="btn attack-btn" id="btn-p2-atk">⚔</button>
-            <button class="btn ctrl-btn" id="btn-p2-left">◀</button>
-            <button class="btn ctrl-btn" id="btn-p2-up">▲</button>
-            <button class="btn ctrl-btn" id="btn-p2-right">▶</button>
+            <button class="btn attack-btn" data-btn="KeyL">⚔</button>
+            <button class="btn ctrl-btn" data-btn="ArrowLeft">◀</button>
+            <button class="btn ctrl-btn" data-btn="ArrowUp">▲</button>
+            <button class="btn ctrl-btn" data-btn="ArrowRight">▶</button>
         </div>
     </div>
 
-    <!-- Oyunun 16:9 Çizileceği Ekran -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- JS Modül Bağlantıları -->
     <script src="src/physics.js"></script>
     <script src="src/player.js"></script>
     <script src="src/weapon.js"></script>
